@@ -37,6 +37,7 @@ precision mediump float;
 attribute vec3 position;
 attribute vec3 color;
 varying vec3 vColor;    //calculates the values inbetween vertecies
+uniform mat4 matrix;
 
 void main() {
     vColor = color;
@@ -77,4 +78,36 @@ gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
 
 gl.useProgram(program); //creates an executable program on the graphics card
+
+//a matrix stores transformations and replays them on to any number of verticies
+//you can only do this after the useProgram() method
+
+const { mat4 } = glMatrix; //object destruction
+const matrix = mat4.create(); //array elements 12, 13, 14 (x, y, z) tell where the vertex currently is - translation coordinates
+//aray elements 0, 1, 2, 4, 5, 6, 8, 9, 10 collectively represent the rotation of the object
+const uniformLocation = {
+    matrix: gl.getUniformLocation(program, 'matrix') //returns the location of a specific uniform variable 
+}
+
+mat4.translate(matrix, matrix, [0.5, 0.3, 0]); //transforms vertex position
+mat4.scale(matrix, matrix, [0.5, 0.5, 0.5]); //transforms vertex size
+console.log(matrix);
+
+function rotate_triangle() {
+    //tells the browser you wish to perform an animation and request that the browser
+    //calls a speicfied function to update an animation before the next repaint
+    //the callback is invoked before the repaint
+    //CPU friendly
+    requestAnimationFrame(rotate_triangle);
+
+    mat4.rotateY(matrix, matrix, Math.PI / 2 / 70);
+    gl.uniformMatrix4fv(uniformLocation.matrix, false, matrix); //specifies matrix values for uniform variables
+    gl.drawArrays(gl.TRIANGLES, 0, 3); //when changing the math of your object you have to tell it to rerender
+};
+
+rotate_triangle();
+//the transformations applied to the matrix are replayed on the vertex in the reverse order
+//rotate and scale before translations (in reverse)
+
+
 gl.drawArrays(gl.TRIANGLES, 0, 3); //executes shaders on the GPU

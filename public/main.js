@@ -38,9 +38,10 @@ precision mediump float;
 attribute vec3 position;   //attributes are defined in vertex shader source code
 attribute vec3 color;
 varying vec3 vColor;
+uniform mat4 matrix;        //a global variable, has the same value in the shader program and in JS
 
 void main(){
-    gl_Position = vec4(position, 1);
+    gl_Position = matrix * vec4(position, 1);  //matrix values manipulate the vertex positions
     vColor = color;
 }`);
 gl.compileShader(vertexShader);
@@ -77,4 +78,30 @@ gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
 //draw vertex
 
 gl.useProgram(program);
-gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+//get uniform location
+
+const uniformLocation = {
+    matrix: gl.getUniformLocation(program, 'matrix')
+};
+
+//create matrix
+
+const { mat4 } = glMatrix;
+const matrix = mat4.create();
+
+//input transformation (translating, scaling, rotating) data
+
+mat4.translate(matrix, matrix, [0.4, 0.4, 0.4]);
+mat4.scale(matrix, matrix, [0.6, 0.6, 0.6]);
+
+//animate rotation
+
+function animate() {
+    requestAnimationFrame(animate);
+    mat4.rotateY(matrix, matrix, Math.PI / 2 / 50);
+    gl.uniformMatrix4fv(uniformLocation.matrix, false, matrix);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+animate();
