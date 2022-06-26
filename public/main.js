@@ -10,8 +10,40 @@ if (!gl) {
 //set the vertex data
 
 const vertexData = [
-    0, 0.8, 0,
-    0.8, -0.8, 0, -0.8, -0.8, 0
+    // Front face
+    -1.0, -1.0, 1.0,
+    1.0, -1.0, 1.0,
+    1.0, 1.0, 1.0, -1.0, -1.0, 1.0,
+    1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
+
+    // Back face
+    -1.0, -1.0, -1.0, -1.0, 1.0, -1.0,
+    1.0, 1.0, -1.0, -1.0, -1.0, -1.0,
+    1.0, 1.0, -1.0,
+    1.0, -1.0, -1.0,
+
+    // Top face
+    -1.0, 1.0, -1.0, -1.0, 1.0, 1.0,
+    1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
+    1.0, 1.0, 1.0,
+    1.0, 1.0, -1.0,
+
+    // Bottom face
+    -1.0, -1.0, -1.0,
+    1.0, -1.0, -1.0,
+    1.0, -1.0, 1.0, -1.0, -1.0, -1.0,
+    1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
+
+    // Right face
+    1.0, -1.0, -1.0,
+    1.0, 1.0, -1.0,
+    1.0, 1.0, 1.0,
+    1.0, -1.0, -1.0,
+    1.0, 1.0, 1.0,
+    1.0, -1.0, 1.0,
+
+    // Left face
+    -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
 ];
 
 //initialize buffer to send the data to the GPU
@@ -20,11 +52,19 @@ const positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW);
 
-const colorData = [
-    1, 0, 0,
-    0, 1, 0,
-    0, 0, 1
-];
+//set the color data
+
+function randomColor() {
+    return [Math.random(), Math.random(), Math.random()];
+};
+
+const colorData = [];
+for (let i = 0; i < 6; i++) {
+    let faceColor = randomColor();
+    for (let y = 0; y < 6; y++) {
+        colorData.push(...faceColor);
+    }
+}
 
 const colorBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
@@ -75,9 +115,10 @@ gl.enableVertexAttribArray(colorLocation);
 gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
 
-//draw vertex
+//draw vertecies
 
 gl.useProgram(program);
+gl.enable(gl.DEPTH_TEST);
 
 //get uniform location
 
@@ -92,16 +133,17 @@ const matrix = mat4.create();
 
 //input transformation (translating, scaling, rotating) data
 
-mat4.translate(matrix, matrix, [0.4, 0.4, 0.4]);
-mat4.scale(matrix, matrix, [0.6, 0.6, 0.6]);
+mat4.translate(matrix, matrix, [0.3, 0.3, 0]);
+mat4.scale(matrix, matrix, [0.4, 0.4, 0.4]);
 
 //animate rotation
 
 function animate() {
     requestAnimationFrame(animate);
-    mat4.rotateY(matrix, matrix, Math.PI / 2 / 50);
+    mat4.rotateY(matrix, matrix, Math.PI / 2 / 60);
+    mat4.rotateZ(matrix, matrix, Math.PI / 2 / 60);
     gl.uniformMatrix4fv(uniformLocation.matrix, false, matrix);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.drawArrays(gl.TRIANGLES, 0, vertexData.length / 3);
 }
 
 animate();
