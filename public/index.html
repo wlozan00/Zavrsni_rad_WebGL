@@ -12,12 +12,12 @@
 </head>
 
 <body>
-    <div class="title-section">
-        <h1>WebGL</h1>
-    </div>
-    <div class="content-section">
-        <canvas width="600px" height="600px"></canvas>
-    </div>
+    <canvas></canvas>
+    <script>
+        const c = document.querySelector('canvas');
+        c.width = innerWidth;
+        c.height = innerHeight;
+    </script>
 </body>
 
 </html>

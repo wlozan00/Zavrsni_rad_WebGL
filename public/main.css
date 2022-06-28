@@ -4,30 +4,9 @@
 
 body {
     margin: 0;
-    height: 100vh;
     background-color: black;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
-.title-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 30vh;
-}
-
-h1 {
-    color: crimson;
-    font-size: 5rem;
-}
-
-.content-section {
-    width: fit-content;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: solid;
-    border-color: coral;
+canvas {
+    display: block;
 }

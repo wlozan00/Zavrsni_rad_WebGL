@@ -77,7 +77,7 @@ gl.shaderSource(vertexShader, `
 precision mediump float;
 attribute vec3 position;   //attributes are defined in vertex shader source code
 attribute vec3 color;
-varying vec3 vColor;
+varying vec3 vColor;        //calculates the values inbetween vertecies
 uniform mat4 matrix;        //a global variable, has the same value in the shader program and in JS
 
 void main(){
@@ -126,23 +126,34 @@ const uniformLocation = {
     matrix: gl.getUniformLocation(program, 'matrix')
 };
 
-//create matrix
+//create transformation matrix 
 
 const { mat4 } = glMatrix;
 const matrix = mat4.create();
 
+//create perspective projection matrix
+
+const projectionMatrix = mat4.create();
+mat4.perspective(projectionMatrix, Math.PI / 2, canvas.width / canvas.height, 1e-4, 1e4);
+
+//combine the perspective matrix and the transformatin matrix and upload it to the shader program
+
+const resultMatrix = mat4.create();
+
+
 //input transformation (translating, scaling, rotating) data
 
-mat4.translate(matrix, matrix, [0.3, 0.3, 0]);
-mat4.scale(matrix, matrix, [0.4, 0.4, 0.4]);
+mat4.translate(matrix, matrix, [0.3, 0.3, -1]);
+mat4.scale(matrix, matrix, [0.3, 0.3, 0.3]);
 
 //animate rotation
 
 function animate() {
     requestAnimationFrame(animate);
-    mat4.rotateY(matrix, matrix, Math.PI / 2 / 60);
-    mat4.rotateZ(matrix, matrix, Math.PI / 2 / 60);
-    gl.uniformMatrix4fv(uniformLocation.matrix, false, matrix);
+    mat4.rotateX(matrix, matrix, Math.PI / 2 / 80);
+    mat4.rotateZ(matrix, matrix, Math.PI / 2 / 80);
+    mat4.multiply(resultMatrix, projectionMatrix, matrix); //order matters
+    gl.uniformMatrix4fv(uniformLocation.matrix, false, resultMatrix);
     gl.drawArrays(gl.TRIANGLES, 0, vertexData.length / 3);
 }
 

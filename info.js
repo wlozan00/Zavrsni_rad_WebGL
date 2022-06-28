@@ -36,7 +36,7 @@ gl.shaderSource(vertexShader, `
 precision mediump float;  
 attribute vec3 position;
 attribute vec3 color;
-varying vec3 vColor;    //calculates the values inbetween vertecies
+varying vec3 vColor;    
 uniform mat4 matrix;
 
 void main() {
@@ -78,6 +78,9 @@ gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
 
 gl.useProgram(program); //creates an executable program on the graphics card
+
+gl.enable(gl.DEPTH_TEST) //If enabled, do depth comparisons and update the depth buffer. 
+    //Note that even if the depth buffer exists and the depth mask is non-zero, the depth buffer is not updated if the depth test is disabled. 
 
 //a matrix stores transformations and replays them on to any number of verticies
 //you can only do this after the useProgram() method
