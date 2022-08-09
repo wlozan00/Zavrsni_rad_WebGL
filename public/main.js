@@ -10,40 +10,54 @@ if (!gl) {
 //set the vertex data
 
 const vertexData = [
+
     // Front face
     -1.0, -1.0, 1.0,
-    1.0, -1.0, 1.0,
-    1.0, 1.0, 1.0, -1.0, -1.0, 1.0,
-    1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
+     1.0, -1.0, 1.0,
+     1.0,  1.0, 1.0,
+    -1.0, -1.0, 1.0,
+     1.0,  1.0, 1.0, 
+    -1.0,  1.0, 1.0,
 
     // Back face
-    -1.0, -1.0, -1.0, -1.0, 1.0, -1.0,
-    1.0, 1.0, -1.0, -1.0, -1.0, -1.0,
-    1.0, 1.0, -1.0,
-    1.0, -1.0, -1.0,
+    -1.0, -1.0, -1.0,
+    -1.0,  1.0, -1.0,
+     1.0,  1.0, -1.0,
+    -1.0, -1.0, -1.0,
+     1.0,  1.0, -1.0,
+     1.0, -1.0, -1.0,
 
     // Top face
-    -1.0, 1.0, -1.0, -1.0, 1.0, 1.0,
-    1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
-    1.0, 1.0, 1.0,
-    1.0, 1.0, -1.0,
+    -1.0, 1.0, -1.0,
+    -1.0, 1.0,  1.0,
+     1.0, 1.0,  1.0,
+    -1.0, 1.0, -1.0,
+     1.0, 1.0,  1.0,
+     1.0, 1.0, -1.0,
 
     // Bottom face
     -1.0, -1.0, -1.0,
-    1.0, -1.0, -1.0,
-    1.0, -1.0, 1.0, -1.0, -1.0, -1.0,
-    1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
-
+     1.0, -1.0, -1.0,
+     1.0, -1.0,  1.0,
+    -1.0, -1.0, -1.0,
+     1.0, -1.0,  1.0, 
+    -1.0, -1.0,  1.0,
     // Right face
-    1.0, -1.0, -1.0,
-    1.0, 1.0, -1.0,
-    1.0, 1.0, 1.0,
-    1.0, -1.0, -1.0,
-    1.0, 1.0, 1.0,
-    1.0, -1.0, 1.0,
 
+    1.0, -1.0, -1.0,
+    1.0,  1.0, -1.0,
+    1.0,  1.0,  1.0,
+    1.0, -1.0, -1.0,
+    1.0,  1.0,  1.0,
+    1.0, -1.0,  1.0,
     // Left face
-    -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
+
+    -1.0, -1.0, -1.0,
+    -1.0, -1.0,  1.0, 
+    -1.0,  1.0,  1.0, 
+    -1.0, -1.0, -1.0, 
+    -1.0,  1.0,  1.0, 
+    -1.0, 1.0,  -1.0,
 ];
 
 //initialize buffer to send the data to the GPU
@@ -75,10 +89,10 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
 const vertexShader = gl.createShader(gl.VERTEX_SHADER);
 gl.shaderSource(vertexShader, `
 precision mediump float;
-attribute vec3 position;   //attributes are defined in vertex shader source code
+attribute vec3 position;   
 attribute vec3 color;
-varying vec3 vColor;        //calculates the values inbetween vertecies
-uniform mat4 matrix;        //a global variable, has the same value in the shader program and in JS
+varying vec3 vColor;        
+uniform mat4 matrix;   //a global variable, has the same value in the shader program and in JS
 
 void main(){
     gl_Position = matrix * vec4(position, 1);  //matrix values manipulate the vertex positions
@@ -131,6 +145,12 @@ const uniformLocation = {
 const { mat4 } = glMatrix;
 const matrix = mat4.create();
 
+//input transformation (translating, scaling, rotating) data
+
+mat4.translate(matrix, matrix, [0.3, 0.2, -1]);
+mat4.scale(matrix, matrix, [0.3, 0.3, 0.3]);
+
+
 //create perspective projection matrix
 
 const projectionMatrix = mat4.create();
@@ -139,12 +159,6 @@ mat4.perspective(projectionMatrix, Math.PI / 2, canvas.width / canvas.height, 1e
 //combine the perspective matrix and the transformatin matrix and upload it to the shader program
 
 const resultMatrix = mat4.create();
-
-
-//input transformation (translating, scaling, rotating) data
-
-mat4.translate(matrix, matrix, [0.3, 0.3, -1]);
-mat4.scale(matrix, matrix, [0.3, 0.3, 0.3]);
 
 //animate rotation
 
