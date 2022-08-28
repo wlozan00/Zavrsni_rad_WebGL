@@ -10,7 +10,6 @@ if (!gl) {
 //set the vertex data
 
 const vertexData = [
-
     // Front face
     -1.0, -1.0, 1.0,
      1.0, -1.0, 1.0,
@@ -18,7 +17,6 @@ const vertexData = [
     -1.0, -1.0, 1.0,
      1.0,  1.0, 1.0, 
     -1.0,  1.0, 1.0,
-
     // Back face
     -1.0, -1.0, -1.0,
     -1.0,  1.0, -1.0,
@@ -26,7 +24,6 @@ const vertexData = [
     -1.0, -1.0, -1.0,
      1.0,  1.0, -1.0,
      1.0, -1.0, -1.0,
-
     // Top face
     -1.0, 1.0, -1.0,
     -1.0, 1.0,  1.0,
@@ -34,7 +31,6 @@ const vertexData = [
     -1.0, 1.0, -1.0,
      1.0, 1.0,  1.0,
      1.0, 1.0, -1.0,
-
     // Bottom face
     -1.0, -1.0, -1.0,
      1.0, -1.0, -1.0,
@@ -43,7 +39,6 @@ const vertexData = [
      1.0, -1.0,  1.0, 
     -1.0, -1.0,  1.0,
     // Right face
-
     1.0, -1.0, -1.0,
     1.0,  1.0, -1.0,
     1.0,  1.0,  1.0,
@@ -51,14 +46,30 @@ const vertexData = [
     1.0,  1.0,  1.0,
     1.0, -1.0,  1.0,
     // Left face
-
     -1.0, -1.0, -1.0,
     -1.0, -1.0,  1.0, 
     -1.0,  1.0,  1.0, 
     -1.0, -1.0, -1.0, 
     -1.0,  1.0,  1.0, 
-    -1.0, 1.0,  -1.0,
+    -1.0,  1.0, -1.0,
 ];
+
+//Construct an Array by repeating a pattern n times
+
+function repeat(n, pattern) {
+    return [...Array(n)].reduce(sum => sum.concat(pattern), []);
+}
+
+//add the uv texture coordinates
+const uvData = repeat(6, [
+    0, 0,
+    1, 0,
+    1, 1,
+    
+    0, 0,
+    1, 1,
+    0, 1,
+]);
 
 //initialize buffer to send the data to the GPU
 
@@ -66,23 +77,41 @@ const positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW);
 
-//set the color data
+const uvBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvData), gl.STATIC_DRAW);
 
-function randomColor() {
-    return [Math.random(), Math.random(), Math.random()];
-};
+//load a texture image
 
-const colorData = [];
-for (let i = 0; i < 6; i++) {
-    let faceColor = randomColor();
-    for (let y = 0; y < 6; y++) {
-        colorData.push(...faceColor);
+function loadTexture (url) {
+    const texture = gl.createTexture();
+    const image = new Image();
+
+    image.onload = e => {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+        if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+            gl.generateMipmap(gl.TEXTURE_2D);
+        }
+        else {
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        }
+
+        function isPowerOf2 (value) {
+            return value & (value -1) === 0;
+        }
     }
-}
 
-const colorBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
+    image.src = url;
+    return texture;
+}
+const crate = loadTexture('cratetex.png');
+gl.activeTexture(gl.TEXTURE0);
+gl.bindTexture(gl.TEXTURE_2D, crate);
 
 //add shaders
 
@@ -90,23 +119,24 @@ const vertexShader = gl.createShader(gl.VERTEX_SHADER);
 gl.shaderSource(vertexShader, `
 precision mediump float;
 attribute vec3 position;   
-attribute vec3 color;
-varying vec3 vColor;        
+attribute vec2 UV;
+varying vec2 vUV;        
 uniform mat4 matrix;   //a global variable, has the same value in the shader program and in JS
 
 void main(){
+    vUV = UV;
     gl_Position = matrix * vec4(position, 1);  //matrix values manipulate the vertex positions
-    vColor = color;
 }`);
 gl.compileShader(vertexShader);
 
 const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
 gl.shaderSource(fragmentShader, `
 precision mediump float;
-varying vec3 vColor;
+varying vec2 vUV;
+uniform sampler2D textureID;
 
 void main() {
-    gl_FragColor = vec4(vColor, 1);
+    gl_FragColor = texture2D(textureID, vUV);
 }`);
 gl.compileShader(fragmentShader);
 
@@ -124,10 +154,10 @@ gl.enableVertexAttribArray(positionLocation);
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
 
-const colorLocation = gl.getAttribLocation(program, `color`);
-gl.enableVertexAttribArray(colorLocation);
-gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
+const uvLocation = gl.getAttribLocation(program, `UV`);
+gl.enableVertexAttribArray(uvLocation);
+gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+gl.vertexAttribPointer(uvLocation, 2, gl.FLOAT, false, 0, 0);
 
 //draw vertecies
 
@@ -137,8 +167,13 @@ gl.enable(gl.DEPTH_TEST);
 //get uniform location
 
 const uniformLocation = {
-    matrix: gl.getUniformLocation(program, 'matrix')
+    matrix: gl.getUniformLocation(program, 'matrix'),
+    textureID: gl.getUniformLocation(program, 'textureID'),
 };
+
+//get the texture unifomr
+
+gl.uniform1i(uniformLocation.textureID, 0);
 
 //create transformation matrix 
 
@@ -164,8 +199,8 @@ const resultMatrix = mat4.create();
 
 function animate() {
     requestAnimationFrame(animate);
-    mat4.rotateX(matrix, matrix, Math.PI / 2 / 80);
-    mat4.rotateZ(matrix, matrix, Math.PI / 2 / 80);
+    mat4.rotateX(matrix, matrix, Math.PI / 2 / 180);
+    mat4.rotateZ(matrix, matrix, Math.PI / 2 / 180);
     mat4.multiply(resultMatrix, projectionMatrix, matrix); //order matters
     gl.uniformMatrix4fv(uniformLocation.matrix, false, resultMatrix);
     gl.drawArrays(gl.TRIANGLES, 0, vertexData.length / 3);
